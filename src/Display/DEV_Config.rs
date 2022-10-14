@@ -30,8 +30,9 @@
 #
 ******************************************************************************/
 
-use arduino_hal::spi;
+use arduino_hal::{spi, Peripherals, Spi};
 // use embedded_hal::spi::FullDuplex;
+use arduino_hal::port::{mode::*, *};
 
 mod Debug;
 
@@ -42,6 +43,9 @@ pub type UDOUBLE = u32;
 /**
  * GPIO config
 **/
+const DP: Peripherals = arduino_hal::Peripherals::take().unwrap();
+const PINS: Pins = arduino_hal::pins!(DP);
+
 pub const DEV_CS_PIN: i32 = 10;
 pub const DEV_DC_PIN: i32 = 7;
 pub const DEV_RST_PIN: i32 = 8;
@@ -50,26 +54,26 @@ pub const DEV_BL_PIN: i32 = 9;
 /**
  * GPIO read and write
 **/
-pub fn dev_digital_write (_pin: Pin<Input<Floating>>, _value: u8) -> () {
-  if _value == 0 {
-    _pin.set_low();
-  } else {
+pub fn dev_digital_write (_pin: Pin<Input<Floating>>, _value: bool) {
+  if _value {
     _pin.set_high();
+  } else {
+    _pin.set_low();
   }
 } 
-pub fn dev_digital_read (_pin: Pin<Input<Floating>>) -> u8 {
+pub fn dev_digital_read (_pin: Pin<Input<Floating>>) -> bool {
   if _pin.is_low() {
-    return 0;
+    false
   } else {
-      return 1;
+    true
   }
 }
 
 /**
  * SPI
 **/
-pub fn dev_spi_write (_dat: u8) {
-  SPI.transfer(_dat); // what's the correct function?
+pub fn dev_spi_write (spi: Spi, _dat: u8) {
+  spi.transfer(_dat); // what's the correct function?
 }
 
 /**
@@ -83,34 +87,37 @@ pub fn dev_delay_ms (__xms: u16) {
  * PWM_BL
 **/
 fn dev_set_pwm (_value: u8) {
-  pins[DEV_BL_PIN].analogWrite(_value);// what's the correct function?
+  PINS[DEV_BL_PIN].analogWrite(_value);// what's the correct function?
 }
 
 fn gpio_init () {
-  pins[DEV_CS_PIN].into_output();
-  pins[DEV_RST_PIN].into_output();
-  pins[DEV_DC_PIN].into_output();
-  pins[DEV_BL_PIN].into_output();
-  pins[DEV_BL_PIN].analogWrite(140); // what's the right method?
+  PINS[DEV_CS_PIN].into_output();
+  PINS[DEV_RST_PIN].into_output();
+  PINS[DEV_DC_PIN].into_output();
+  PINS[DEV_BL_PIN].into_output();
+  PINS[DEV_BL_PIN].analogWrite(140); // what's the right method?
 }
 
 pub fn config_init () {
   gpio_init();
   
   // serial
-  let mut serial = arduino_hal::default_serial!(dp, pins, 115200);
+  let mut serial = arduino_hal::default_serial!(DP, PINS, 115200);
 
   // SPI
   let (mut spi, _) = arduino_hal::Spi::new(
-    dp.SPI,
-    pins.d13.into_output(),
-    pins.d11.into_output(),
-    pins.d12.into_pull_up_input(),
-    pins.d10.into_output(),
+    DP.SPI,
+    PINS.d13.into_output(),
+    PINS.d11.into_output(),
+    PINS.d12.into_pull_up_input(),
+    PINS.d10.into_output(),
     spi::Settings::default(),
   );
+
   // SPI.setDataMode(SPI_MODE3);
   // SPI.setBitOrder(MSBFIRST);
   // SPI.setClockDivider(SPI_CLOCK_DIV2);
   // SPI.begin();
+
+  spi
 }

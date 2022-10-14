@@ -15,15 +15,15 @@ impl Heater {
     self.temp = self.probe_pin.analog_read(adc); // read from analog pin
   }
 
-  pub fn setTemp (&self, val: i16) -> () {
+  pub fn set_temp (&self, val: i16) -> () {
     self.setTemp += val;
   }
 
-  pub fn getSetTemp (&self) -> i16 {
+  pub fn get_settemp (&self) -> i16 {
     self.setTemp
   }
 
-  pub fn readTemp (&self) -> i16 {
+  pub fn read_temp (&self) -> i16 {
     self.update();
     self.temp
   }  
