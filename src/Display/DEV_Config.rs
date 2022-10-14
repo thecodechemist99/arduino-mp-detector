@@ -68,21 +68,21 @@ pub fn dev_digital_read (_pin) -> u8 {
 /**
  * SPI
 **/
-pub fn dev_spi_write (_dat) -> () {
+fn dev_spi_write (_dat) -> () {
   SPI.transfer(_dat); // what's the correct function?
 }
 
 /**
  * delay x ms
 **/
-pub fn dev_delay_ms (__xms: u16) -> () {
+fn dev_delay_ms (__xms: u16) -> () {
   arduino_hal::delay_ms(__xms);
 }
 
 /**
  * PWM_BL
 **/
-pub fn dev_set_pwm (_value) -> () {
+fn dev_set_pwm (_value) -> () {
   pins[DEV_BL_PIN].analogWrite(_value);// what's the correct function?
 }
 

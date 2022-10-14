@@ -3,7 +3,7 @@
   * @file    fonts.rs
   * @author  Florian Beck, MCD Application Team
   * @version V1.0.0
-  * @date    06-October-2022
+  * @date    14-October-2022
   * @brief   Header for fonts.c file
   ******************************************************************************
   * @attention
@@ -36,8 +36,8 @@
   */
 
 /* 最大字体微软雅黑24 (32x41) */
-const MAX_HEIGHT_FONT: u8 = 41;
-const MAX_WIDTH_FONT: u8 = 32;
+const MAX_HEIGHT_FONT: usize = 41;
+const MAX_WIDTH_FONT: usize = 32;
 const OFFSET_BITMAP: u8;
 
 //ASCII
@@ -49,28 +49,28 @@ pub struct  SFont {
 
 
 // GB2312
-struct ChCn {                                         // 汉字字模数据结构
-  index: [char; 3],                                   // 汉字内码索引
-  matrix: [char; MAX_HEIGHT_FONT * MAX_WIDTH_FONT / 8],    // 点阵码数据
+struct ChCn {                                           // 汉字字模数据结构
+  index: [char; 3],                                     // 汉字内码索引
+  matrix: [char; MAX_HEIGHT_FONT * MAX_WIDTH_FONT / 8], // 点阵码数据
 }
 
 
-struct CFont {
-  table: &ChCn,
+pub struct CFont {
+  table: ChCn,
   size: u16,
   ascii_width: u16,
   width: u16,
   height: u16,
 }
 
-pub const FONT24: SFont;
-pub const FONT20: SFont;
-pub const FONT16: SFont;
-pub const FONT12: SFont;
-pub const FONT8: SFont;
+pub const Font24: SFont;
+pub const Font20: SFont;
+pub const Font16: SFont;
+pub const Font12: SFont;
+pub const Font8: SFont;
 
-pub const FONT12_CN: CFont;
-pub const FONT24_CN: CFont;
+pub const Font12_CN: CFont;
+pub const Font24_CN: CFont;
 pub const Font16_Table: [char];
  
 

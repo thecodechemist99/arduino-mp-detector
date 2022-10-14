@@ -70,8 +70,6 @@
 * THE SOFTWARE.
 *
 ******************************************************************************/
-#[path = "DEV_Config.rs"]
-mod DEV_Config;
 #[path = "LCD_Driver.rs"]
 mod LCD_Driver;
 #[path = "fonts.rs"]
@@ -80,13 +78,14 @@ mod fonts;
 #[macro_use]
 mod Debug;
 
-use DEV_Config::*;
 use LCD_Driver::*;
 use MirrorImage::*;
-use DotPixel::*;
 use DotStyle::*;
 use LineStyle::*;
-use DrawFill::*;
+
+pub use DotPixel::*;
+pub use DrawFill::*;
+pub use fonts::*;
 
 /**
  * Image attributes
@@ -157,7 +156,7 @@ const FONT_BACKGROUND: UWORD = WHITE;
 /**
  * The size of the point
 **/
-enum DotPixel {
+pub enum DotPixel {
     DotPixel1x1 = 1,  // 1 x 1
     DotPixel2x2,      // 2 x 2
     DotPixel3x3,      // 3 x 3
@@ -189,7 +188,7 @@ enum LineStyle {
 /**
  * Whether the graphic is filled
 **/
-enum DrawFill {
+pub enum DrawFill {
     DrawFillEmpty = 0,
     DrawFillFull,
 }
@@ -209,32 +208,6 @@ pub struct SPaintTime {
 const ARRAY_LEN: i32 = 50;
 
 impl PAINT {
-  /******************************************************************************
-    function: Create Image
-    parameter :
-      image   :   Pointer to the image cache
-      width   :   The width of the picture
-      height  :   The height of the picture
-      color   :   Whether the picture is inverted
-  ******************************************************************************/
-  fn new_image (&self, width: UWORD, height: UWORD, rotate: UWORD, color: UWORD) {
-    self.width_memory = width;
-    self.height_memory = height;
-    self.color = color;
-    self.width_byte = width;
-    self.height_byte = height;
-    self.rotate = rotate;
-    self.mirror = MirrorNone;
-
-    if rotate == ROTATE_0 || rotate == ROTATE_180 {
-      self.width = width;
-      self.height = height;
-    } else {
-      self.width = height;
-      self.height = width;
-    }
-  }
-
   /******************************************************************************
     function: Select Image Rotate
       parameter:
@@ -587,7 +560,7 @@ impl PAINT {
     color_foreground : Select the foreground color of the English character
   ******************************************************************************/
   fn draw_char(&self, xpoint: UWORD, ypoint: UWORD, acsii_char: char,
-      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+      font: SFont, color_background: UWORD, color_foreground: UWORD) {
     let page: UWORD;
     let column: UWORD;
 
@@ -640,7 +613,7 @@ impl PAINT {
     color_foreground : Select the foreground color of the English character
   ******************************************************************************/
   fn draw_string_en(&self, xstart: UWORD, ystart: UWORD, p_string: char,
-      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+      font: SFont, color_background: UWORD, color_foreground: UWORD) {
     let xpoint: UWORD = xstart;
     let ypoint: UWORD = ystart;
 
@@ -682,7 +655,7 @@ impl PAINT {
     color_background : Select the background color of the English character
     color_foreground : Select the foreground color of the English character
   ******************************************************************************/
-  fn draw_string_cn (&self, xstart: UWORD, ystart: UWORD, p_string: &char, font: cFONT,
+  fn draw_string_cn (&self, xstart: UWORD, ystart: UWORD, p_string: &char, font: CFont,
       color_background: UWORD, color_foreground: UWORD) {
     let p_text: char = p_string;
 
@@ -755,7 +728,7 @@ impl PAINT {
   ******************************************************************************/
 
   fn draw_num (&self, xpoint: UWORD, ypoint: UWORD, number: i32,
-      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+      font: SFont, color_background: UWORD, color_foreground: UWORD) {
 
     let num_bit: i16 = 0;
     let str_bit: i16 = 0;
@@ -801,7 +774,7 @@ impl PAINT {
     color            : Select the background color of the English character
   ******************************************************************************/
   fn draw_float_num (&self, xpoint: UWORD, ypoint: UWORD, number: f64, decimal_point: UBYTE,
-      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+      font: SFont, color_background: UWORD, color_foreground: UWORD) {
     let str: [char; ARRAY_LEN] = {0};
     dtostrf(number, 0, decimal_point + 2, str);
     let p_str: char= (char *)malloc((strlen(str)) * sizeof(char));
@@ -825,7 +798,7 @@ impl PAINT {
     font             : A structure pointer that displays a character size
     color            : Select the background color of the English character
   ******************************************************************************/
-  fn draw_time (&self, xstart: UWORD, ystart: UWORD, p_time: &SPaintTime, font: SFONT,
+  fn draw_time (&self, xstart: UWORD, ystart: UWORD, p_time: &SPaintTime, font: SFont,
       color_background: UWORD, color_foreground: UWORD) {
     let value: [u8] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
@@ -863,5 +836,34 @@ impl PAINT {
         // pgm_read_byte()
       }
     }
+  }
+}
+
+/******************************************************************************
+  function: Create Image
+  parameter :
+    image   :   Pointer to the image cache
+    width   :   The width of the picture
+    height  :   The height of the picture
+    color   :   Whether the picture is inverted
+******************************************************************************/
+pub fn paint_new_image (width: UWORD, height: UWORD, rotate: UWORD, color: UWORD) {
+  if rotate == ROTATE_90 || rotate == ROTATE_270 {
+    let new_width = height;
+    height = width;
+    width = new_width;
+  }
+
+  PAINT {
+    image: 0, // temporary fix
+    width_memory: width,
+    height_memory: height,
+    color,
+    width_byte: width,
+    height_byte: height,
+    rotate,
+    mirror: MirrorNone,
+    width,
+    height,
   }
 }

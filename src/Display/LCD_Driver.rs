@@ -29,8 +29,7 @@
 ******************************************************************************/
 #[path = "DEV_Config.rs"]
 mod DEV_Config;
-
-use DEV_Config::*;
+pub use DEV_Config::*;
 
 pub const LCD_WIDTH: UWORD = 320;  // LCD width
 pub const LCD_HEIGHT: UWORD = 240; // LCD height
@@ -76,7 +75,7 @@ pub fn lcd_write_data_word (data: UWORD) {
 function:	
 		Common register initialization
 ******************************************************************************/
-fn lcd_init () {
+pub fn lcd_init () {
 	lcd_reset();
 
 	lcd_write_command(0x36);
@@ -172,10 +171,10 @@ fn lcd_init () {
 /******************************************************************************
 function:	Set the cursor position
 parameter	:
-	  Xstart: Start UWORD x coordinate
-	  Ystart:	Start UWORD y coordinate
-	  Xend  :	End UWORD coordinates
-	  Yend  :	End UWORD coordinatesen
+	  xstart: Start UWORD x coordinate
+	  ystart:	Start UWORD y coordinate
+	  xend  :	End UWORD coordinates
+	  yend  :	End UWORD coordinatesen
 ******************************************************************************/
 pub fn lcd_set_window (xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD) {
 	lcd_write_command(0x2a);
@@ -196,8 +195,8 @@ pub fn lcd_set_window (xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD) {
 /******************************************************************************
 function:	Settings window
 parameter	:
-	  Xstart: Start UWORD x coordinate
-	  Ystart:	Start UWORD y coordinate
+	  xstart: Start UWORD x coordinate
+	  ystart:	Start UWORD y coordinate
 
 ******************************************************************************/
 fn lcd_set_cursor (x: UWORD, y: UWORD) { 
@@ -219,9 +218,9 @@ fn lcd_set_cursor (x: UWORD, y: UWORD) {
 /******************************************************************************
 function:	Clear screen function, refresh the screen to a certain color
 parameter	:
-	  Color :	The color you want to clear all the screen
+	  color :	The color you want to clear all the screen
 ******************************************************************************/
-fn lcd_clear (color: UWORD) {
+pub fn lcd_clear (color: UWORD) {
   let i: u32;
   let j: u32;
 	lcd_set_window(0, 0, LCD_WIDTH, LCD_HEIGHT);
@@ -237,10 +236,10 @@ fn lcd_clear (color: UWORD) {
 /******************************************************************************
 function:	Refresh a certain area to the same color
 parameter	:
-	  Xstart: Start UWORD x coordinate
-	  Ystart:	Start UWORD y coordinate
-	  Xend  :	End UWORD coordinates
-	  Yend  :	End UWORD coordinates
+	  xstart: Start UWORD x coordinate
+	  ystart:	Start UWORD y coordinate
+	  xend  :	End UWORD coordinates
+	  yend  :	End UWORD coordinates
 	  color :	Set the color
 ******************************************************************************/
 fn lcd_clear_window (xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD, color: UWORD) {          
@@ -257,9 +256,9 @@ fn lcd_clear_window (xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD, col
 /******************************************************************************
 function: Draw a point
 parameter	:
-  	    X	: Set the X coordinate
-	      Y	:	Set the Y coordinate
-	  Color :	Set the color
+  	    x	: Set the X coordinate
+	      y	:	Set the Y coordinate
+	  color :	Set the color
 ******************************************************************************/
 pub fn lcd_draw_point (x: UWORD, y: UWORD, color: UWORD) {
 	lcd_set_cursor(x, y);
