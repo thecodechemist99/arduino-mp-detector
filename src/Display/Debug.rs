@@ -14,8 +14,13 @@
 
 const DEV_DEBUG: bool = true;
 
-pub fn debug (__info, ...) {
-  if DEV_DEBUG {
-    // printf("Debug : " __info,##__VA_ARGS__);
-  }
+#[macro_export]
+macro_rules! debug {
+  ($($args:expr),*) => {{
+    let mut string: String = "".to_owned();
+    $(
+      string = format!("{} {}", string, $args);
+    )*
+    println!("Debug :{}", string);
+  }};
 }

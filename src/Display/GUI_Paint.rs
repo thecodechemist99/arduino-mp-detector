@@ -77,6 +77,7 @@ mod LCD_Driver;
 #[path = "fonts.rs"]
 mod fonts;
 #[path = "Debug.rs"]
+#[macro_use]
 mod Debug;
 
 use DEV_Config::*;
@@ -85,7 +86,6 @@ use MirrorImage::*;
 use DotPixel::*;
 use DotStyle::*;
 use LineStyle::*;
-use Debug::*;
 use DrawFill::*;
 
 /**
@@ -103,7 +103,6 @@ pub struct PAINT {
   width_byte: UWORD,
   height_byte: UWORD,
 }
-pub const Paint: PAINT = PAINT {};
 
 /**
  * Display rotate
@@ -207,663 +206,662 @@ pub struct SPaintTime {
     sec: UBYTE,   // 0-59
 }
 
-/******************************************************************************
-  function: Create Image
-  parameter :
-    image   :   Pointer to the image cache
-    width   :   The width of the picture
-    Height  :   The height of the picture
-    Color   :   Whether the picture is inverted
-******************************************************************************/
-fn paint_new_image(width: UWORD, height: UWORD, rotate: UWORD, color: UWORD) {
-  Paint.width_memory = width;
-  Paint.height_memory = height;
-  Paint.color = color;
-  Paint.width_byte = width;
-  Paint.height_byte = height;
-  
-  Paint.rotate = rotate;
-  Paint.mirror = MirrorNone;
-
-  if rotate == ROTATE_0 || rotate == ROTATE_180 {
-    Paint.width = width;
-    Paint.height = height;
-  } else {
-    Paint.width = height;
-    Paint.height = width;
-  }
-}
-
-/******************************************************************************
-  function: Select Image Rotate
-    parameter:
-    Rotate   :   0,90,180,270
-******************************************************************************/
-fn paint_set_rotate(rotate: UWORD) -> () {
-  if rotate == ROTATE_0 || rotate == ROTATE_90 || rotate == ROTATE_180 || rotate == ROTATE_270 {
-    // Debug("Set image Rotate %d\r\n", Rotate);
-    Paint.rotate = rotate;
-  } else {
-    // Debug("rotate = 0, 90, 180, 270\r\n");
-    // exit(0);
-  }
-}
-
-/******************************************************************************
-  function: Select Image mirror
-    parameter:
-    mirror   :       Not mirror,Horizontal mirror,Vertical mirror,Origin mirror
-******************************************************************************/
-fn paint_set_mirroring(mirror: MirrorImage) -> () {
-  match mirror {
-    MirrorNone => {
-      Paint.mirror = mirror;
-      // Debug("mirror image x:%s, y:%s\r\n", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
-    },
-    MirrorHorizontal => {
-      Paint.mirror = mirror;
-      // Debug("mirror image x:%s, y:%s\r\n", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
-    },
-    MirrorVertical => {
-      Paint.mirror = mirror;
-      // Debug("mirror image x:%s, y:%s\r\n", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
-    },
-    MirrorOrigin => {
-      Paint.mirror = mirror;
-      // Debug("mirror image x:%s, y:%s\r\n", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
-    },
-    _ => {
-      // Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, \
-      // MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
-      // exit(0);
-    }
-  }
-}
-
-/******************************************************************************
-  function: Draw Pixels
-  parameter :
-    Xpoint  :   At point X
-    Ypoint  :   At point Y
-    Color   :   Painted colors
-******************************************************************************/
-fn paint_set_pixel(xpoint: UWORD, ypoint: UWORD, color: UWORD) -> () {
-  if xpoint > Paint.width || ypoint > Paint.height {
-    // Debug("Exceeding display boundaries\r\n");
-    return;
-  }
-  let x: UWORD;
-  let y: UWORD;
-
-  match Paint.rotate {
-    0 => {
-      x = xpoint;
-      y = ypoint;
-    },
-    90 => {
-      x = Paint.width_memory - ypoint - 1;
-      y = xpoint;
-    },
-    180 => {
-      x = Paint.width_memory - xpoint - 1;
-      y = Paint.height_memory - ypoint - 1;
-    },
-    270 => {
-      x = ypoint;
-      y = Paint.height_memory - xpoint - 1;
-    },
-    _ => return,
-  }
-
-  match Paint.mirror {
-    MirrorNone => (),
-    MirrorHorizontal => x = Paint.width_memory - x - 1,
-    MirrorVertical => y = Paint.height_memory - y - 1,
-    MirrorOrigin => {
-      x = Paint.width_memory - x - 1;
-      y = Paint.height_memory - y - 1;
-    },
-    _ => return,
-  }
-
-  // printf("x = %d, y = %d\r\n", X, Y);
-  if x > Paint.width_memory || y > Paint.height_memory {
-    // Debug("Exceeding display boundaries\r\n");
-    return;
-  }
-
-  // UDOUBLE Addr = X / 8 + Y * Paint.WidthByte;
-  lcd_draw_point(x, y, color);
-}
-
-/******************************************************************************
-  function: Clear the color of the picture
-  parameter :
-    Color   :   Painted colors
-******************************************************************************/
-fn paint_clear(color: UWORD) -> () {
-  lcd_set_window(0, 0, Paint.width_byte , Paint.height_byte);
-  for y in 0..Paint.height_byte {
-    for x in 0..Paint.width_byte { // 8 pixel = 1 byte
-      lcd_write_data_word(color);
-    }
-  }
-}
-
-/******************************************************************************
-  function: Clear the color of a window
-  parameter:
-    Xstart :   x starting point
-    Ystart :   y starting point
-    Xend   :   x end point
-    Yend   :   y end point
-******************************************************************************/
-fn paint_clear_windows(xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD, color: UWORD) -> () {
-  let x: UWORD;
-  let y: UWORD;
-  for y in ystart..yend {
-    for x in xstart..xend { // 8 pixel = 1 byte
-      paint_set_pixel(x, y, color);
-    }
-  }
-}
-
-/******************************************************************************
-  function:	Draw Point(Xpoint, Ypoint) Fill the color
-  parameter :
-    Xpoint  :   The xpoint coordinate of the point
-    Ypoint	:   The ypoint coordinate of the point
-    Color		:   Set color
-  Dot_Pixel	:	  point size
-******************************************************************************/
-fn paint_draw_point(xpoint: UWORD, ypoint: UWORD, color: UWORD,
-    dot_pixel: DotPixel, dot_fill_way: DotStyle) -> () {
-  if xpoint > Paint.width || ypoint > Paint.height {
-    debug("Paint_DrawPoint Input exceeds the normal display range\r\n");
-    return;
-  }
-
-  let xdir_num: i16;
-  let ydir_num: i16;
-  if dot_fill_way == DotFillAround {
-    for XDir_Num in 0..(2 * dot_pixel - 1) {
-      for YDir_Num in 0..(2 * dot_pixel - 1) {
-        if xpoint + XDir_Num - dot_pixel < 0 || ypoint + YDir_Num - dot_pixel < 0 {
-          break;
-        }
-        // printf("x = %d, y = %d\r\n", Xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel);
-        paint_set_pixel(xpoint + XDir_Num - dot_pixel, ypoint + YDir_Num - dot_pixel, color);
-      }
-    }
-  } else {
-    for XDir_Num in 0..dot_pixel {
-      for YDir_Num in 0..dot_pixel {
-        paint_set_pixel(xpoint + XDir_Num - 1, ypoint + YDir_Num - 1, color);
-      }
-    }
-  }
-}
-
-/******************************************************************************
-function:	Draw a line of arbitrary slope
-  parameter:
-    Xstart : Starting Xpoint point coordinates
-    Ystart : Starting Xpoint point coordinates
-    Xend   : End point Xpoint coordinate
-    Yend   : End point Ypoint coordinate
-    Color  : The color of the line segment
-******************************************************************************/
-fn paint_draw_line(xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD,
-    color: UWORD, line_width: DotPixel, line_style: LineStyle) -> () {
-  if xstart > Paint.width || ystart > Paint.height ||
-      xend > Paint.width || yend > Paint.height {
-    debug("Paint_DrawLine Input exceeds the normal display range\r\n");
-    return;
-  }
-
-  let xpoint: UWORD = xstart;
-  let ypoint: UWORD = ystart;
-  let dx: UWORD;
-  let dy: UWORD;
-  if xend - xstart >= 0 {
-    dx = xend - xstart;
-  } else {
-    dx = xstart - xend;
-  }
-  if yend - ystart <= 0 {
-    dy = yend - ystart;
-  } else {
-    dy = ystart - yend;
-  }
-
-  // Increment direction, 1 is positive, -1 is counter;
-  let xaddway: UWORD;
-  let yaddway: UWORD;
-  if xstart < xend {
-    xaddway = 1;
-  } else {
-    xaddway = -1;
-  }
-  if ystart < yend {
-    yaddway = 1;
-   } else {
-    yaddway = -1;
-   }
-
-  // Cumulative error
-  let esp: UWORD = dx + dy;
-  let dotted_len: u8 = 0;
-
-  loop {
-    dotted_len += 1;
-    // Painted dotted line, 2 point is really virtual
-    if line_style == LineStyleDotted && dotted_len % 3 == 0 {
-      // debug("LINE_DOTTED\r\n");
-      paint_draw_point(xpoint, ypoint, IMAGE_BACKGROUND, line_width, DOT_STYLE_DFT);
-      dotted_len = 0;
-    } else {
-      paint_draw_point(xpoint, ypoint, color, line_width, DOT_STYLE_DFT);
-    }
-    if 2 * esp >= dy {
-      if xpoint == xend {
-        break;
-      }
-      esp += dy;
-      xpoint += xaddway;
-    }
-    if 2 * esp <= dx {
-      if ypoint == yend {
-        break;
-      }
-      esp += dx;
-      ypoint += yaddway;
-    }
-  }
-}
-
-/******************************************************************************
-function:	Draw a rectangle
-  parameter:
-    Xstart : Rectangular  Starting Xpoint point coordinates
-    Ystart : Rectangular  Starting Xpoint point coordinates
-    Xend   : Rectangular  End point Xpoint coordinate
-    Yend   : Rectangular  End point Ypoint coordinate
-    Color  : The color of the Rectangular segment
-    Filled : Whether it is filled--- 1 solid 0：empty
-******************************************************************************/
-fn paint_draw_rectangle(xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD,
-    color: UWORD, line_width: DotPixel, filled: DrawFill) -> () {
-  if xstart > Paint.width || ystart > Paint.height ||
-      xend > Paint.width || yend > Paint.height {
-    debug("Input exceeds the normal display range\r\n");
-    return;
-  }
-
-  if filled {
-    let ypoint: UWORD;
-    for ypoint in ystart..yend {
-      paint_draw_line(xstart, ypoint, xend, ypoint, color ,line_width, LineStyleSolid);
-    }
-  } else {
-    paint_draw_line(xstart, ystart, xend, ystart, color ,line_width, LineStyleSolid);
-    paint_draw_line(xstart, ystart, xstart, yend, color ,line_width, LineStyleSolid);
-    paint_draw_line(xend, yend, xend, ystart, color ,line_width, LineStyleSolid);
-    paint_draw_line(xend, yend, xstart, yend, color ,line_width, LineStyleSolid);
-  }
-}
-
-/******************************************************************************
-  function:	Use the 8-point method to draw a circle of the
-            specified size at the specified position->
-    parameter :
-    X_Center  : Center X coordinate
-    Y_Center  : Center Y coordinate
-    Radius    : circle Radius
-    Color     : The color of the ：circle segment
-    Filled    : Whether it is filled: 1 filling 0：Do not
-******************************************************************************/
-fn paint_draw_circle(x_center: UWORD, y_center: UWORD, radius: UWORD,
-    color: UWORD, line_width: DotPixel, draw_fill: DrawFill) {
-  if x_center > Paint.width || y_center >= Paint.height {
-    debug("Paint_DrawCircle Input exceeds the normal display range\r\n");
-    return;
-  }
-
-  // Draw a circle from(0, R) as a starting point
-  let xcurrent: UWORD = 0;
-  let ycurrent: UWORD = radius;
-
-  // Cumulative error,judge the next point of the logo
-  let esp: UWORD = 3 - (radius << 1);
-  let s_count_y: i16;
-  if draw_fill == DrawFillFull {
-    while xcurrent <= ycurrent { // Realistic circles
-      for sCountY in xcurrent..(ycurrent + 1) {
-        paint_draw_point(x_center + xcurrent, y_center + sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 1
-        paint_draw_point(x_center - xcurrent, y_center + sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 2
-        paint_draw_point(x_center - sCountY, y_center + xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 3
-        paint_draw_point(x_center - sCountY, y_center - xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 4
-        paint_draw_point(x_center - xcurrent, y_center - sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 5
-        paint_draw_point(x_center + xcurrent, y_center - sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 6
-        paint_draw_point(x_center + sCountY, y_center - xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 7
-        paint_draw_point(x_center + sCountY, y_center + xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT);
-      }
-      if esp < 0 {
-        esp += 4 * xcurrent + 6;
-      } else {
-        esp += 10 + 4 * (xcurrent - ycurrent );
-        ycurrent -= 1;
-      }
-      xcurrent += 1;
-    }
-  } else { // Draw a hollow circle
-    while xcurrent <= ycurrent {
-      paint_draw_point(x_center + xcurrent, y_center + ycurrent, color, line_width, DOT_STYLE_DFT); // 1
-      paint_draw_point(x_center - xcurrent, y_center + ycurrent, color, line_width, DOT_STYLE_DFT); // 2
-      paint_draw_point(x_center - ycurrent, y_center + xcurrent, color, line_width, DOT_STYLE_DFT); // 3
-      paint_draw_point(x_center - ycurrent, y_center - xcurrent, color, line_width, DOT_STYLE_DFT); // 4
-      paint_draw_point(x_center - xcurrent, y_center - ycurrent, color, line_width, DOT_STYLE_DFT); // 5
-      paint_draw_point(x_center + xcurrent, y_center - ycurrent, color, line_width, DOT_STYLE_DFT); // 6
-      paint_draw_point(x_center + ycurrent, y_center - xcurrent, color, line_width, DOT_STYLE_DFT); // 7
-      paint_draw_point(x_center + ycurrent, y_center + xcurrent, color, line_width, DOT_STYLE_DFT); // 0
-
-      if esp < 0 {
-        esp += 4 * xcurrent + 6;
-      } else {
-        esp += 10 + 4 * (xcurrent - ycurrent );
-        ycurrent -= 1;
-      }
-      xcurrent += 1;
-    }
-  }
-}
-
-/******************************************************************************
-  function: Show English characters
-  parameter:
-    Xpoint           : X coordinate
-    Ypoint           : Y coordinate
-    Acsii_Char       : To display the English characters
-    Font             : A structure pointer that displays a character size
-    Color_Background : Select the background color of the English character
-    Color_Foreground : Select the foreground color of the English character
-******************************************************************************/
-fn paint_draw_char(xpoint: UWORD, ypoint: UWORD, acsii_char: char,
-    font: sFONT, color_background: UWORD, color_foreground: UWORD) {
-  let page: UWORD;
-  let column: UWORD;
-
-  if xpoint > Paint.width || ypoint > Paint.height {
-    // Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
-    return;
-  }
-  let char_offset: u32;
-  if font.width % 8 {
-    char_offset = (acsii_char - ' ') * font.height * (font.width / 8 + 1);
-  } else {
-    char_offset = (acsii_char - ' ') * font.height * (font.width / 8);
-  }
-
-  let ptr: char = font.table[char_offset];
-
-  for Page in 0..font.height {
-    for Column in 0..font.width {
-      // To determine whether the font background color and screen background color is consistent
-      if FONT_BACKGROUND == color_background { // this process is to speed up the scan
-        if pgm_read_byte(ptr) & (0x80 >> (column % 8)) {
-          paint_set_pixel (xpoint + column, ypoint + Page, color_foreground );
-        }
-      } else {
-        if pgm_read_byte(ptr) & (0x80 >> (column % 8)) {
-          paint_set_pixel (xpoint + column, ypoint + Page, color_foreground );
-        } else {
-          paint_set_pixel (xpoint + column, ypoint + Page, color_background );
-        }
-      }
-      // One pixel is 8 bits
-      if column % 8 == 7 {
-        ptr += 1;
-      }
-    } /* Write a line */
-    if font.width % 8 != 0 {
-      ptr += 1;
-    }
-  }/* Write all */
-}
-
-/******************************************************************************
-  function: Display the string
-  parameter:
-    Xstart           : X coordinate
-    Ystart           : Y coordinate
-    pString          : The first address of the English string to be displayed
-    Font             : A structure pointer that displays a character size
-    Color_Background : Select the background color of the English character
-    Color_Foreground : Select the foreground color of the English character
-******************************************************************************/
-fn paint_draw_string_en(xstart: UWORD, ystart: UWORD, p_string: char,
-    font: sFONT, color_background: UWORD, color_foreground: UWORD) {
-  let xpoint: UWORD = xstart;
-  let ypoint: UWORD = ystart;
-
-  if xstart > Paint.width || ystart > Paint.height {
-    // debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
-    return;
-  }
-
-  while p_string != '\0' {
-    // if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-    if xpoint + font.width > Paint.width {
-      xpoint = xstart;
-      ypoint += font.height;
-    }
-
-    // If the Y direction is full, reposition to(Xstart, Ystart)
-    if ypoint  + font.height > Paint.height {
-      xpoint = xstart;
-      ypoint = ystart;
-    }
-    paint_draw_char(xpoint, ypoint, p_string, font, color_background, color_foreground);
-
-    //The next character of the address
-    p_string += 1;
-
-    //The next word of the abscissa increases the font of the broadband
-    xpoint += font.width;
-  }
-}
-
-/******************************************************************************
-  function: Display the string
-  parameter:
-    Xstart           : X coordinate
-    Ystart           : Y coordinate
-    pString          : The first address of the Chinese string and English
-                       string to be displayed
-    Font             : A structure pointer that displays a character size
-    Color_Background : Select the background color of the English character
-    Color_Foreground : Select the foreground color of the English character
-******************************************************************************/
-fn paint_draw_string_cn(xstart: UWORD, ystart: UWORD, p_string: &char, font: cFONT,
-    color_background: UWORD, color_foreground: UWORD) {
-  const p_text: uchar = pString;
-
-  let refcolumn: UWORD = xstart;
-  let i: i32;
-  let j: i32;
-  let num: i32;
-
-  /* Send the string character by character on EPD */
-  while p_text != 0 {
-    if p_text < 0x7F { //ASCII
-      for Num in 0..font.size {
-        if p_text == pgm_read_byte(font.table[Num].index[0]) {
-          const ptr: char = font.table[Num].matrix[0];
-
-          for j in 0..font.height {
-            for i in 0..font.width {
-              if pgm_read_byte(ptr) & (0x80 >> (i % 8)) {
-                paint_set_pixel(refcolumn + i,ystart + j, color_foreground);
-              }
-              if i % 8 == 7 {
-                ptr += 1;
-              }
-            }
-            if font.width % 8 != 0 {
-              ptr += 1;
-            }
-          }
-          break;
-        }
-      }
-      /* Point on the next character */
-      p_text += 1;
-      /* Decrement the column position by 16 */
-      refcolumn += font.ascii_width;
-    } else { // 中文
-      for Num in 0..font.size {
-        if p_text == pgm_read_byte(font.table[Num].index[0]) && ((p_text + 1) == pgm_read_byte(font.table[Num].index[1])) && ((p_text + 2) == pgm_read_byte(font.table[Num].index[2])) {
-          const ptr: char = font.table[Num].matrix[0];
-          for j in 0..font.height {
-            for i in 0..font.width {
-              if pgm_read_byte(ptr) & (0x80 >> (i % 8)) {
-                paint_set_pixel(refcolumn + i,ystart + j, color_foreground);
-              }
-              if i % 8 == 7 {
-                ptr += 1;
-              }
-            }
-            if font.width % 8 != 0 {
-              ptr += 1;
-            }
-          }
-          break;
-        }
-      }
-      /* Point on the next character */
-      p_text += 3;
-      /* Decrement the column position by 16 */
-      refcolumn += font.width;
-    }
-  }
-}
-
-/******************************************************************************
-  function: Display nummber
-  parameter:
-    Xstart           : X coordinate
-    Ystart           : Y coordinate
-    Nummber          : The number displayed
-    Font             : A structure pointer that displays a character size
-    Color_Background : Select the background color of the English character
-    Color_Foreground : Select the foreground color of the English character
-******************************************************************************/
 const ARRAY_LEN: i32 = 50;
 
-fn paint_draw_num(xpoint: UWORD, ypoint: UWORD, number: i32,
-    font: sFONT, color_background: UWORD, color_foreground: UWORD) {
+impl PAINT {
+  /******************************************************************************
+    function: Create Image
+    parameter :
+      image   :   Pointer to the image cache
+      width   :   The width of the picture
+      height  :   The height of the picture
+      color   :   Whether the picture is inverted
+  ******************************************************************************/
+  fn new_image (&self, width: UWORD, height: UWORD, rotate: UWORD, color: UWORD) {
+    self.width_memory = width;
+    self.height_memory = height;
+    self.color = color;
+    self.width_byte = width;
+    self.height_byte = height;
+    self.rotate = rotate;
+    self.mirror = MirrorNone;
 
-  let num_bit: i16 = 0;
-  let str_bit: i16 = 0;
-  let str_array[ARRAY_LEN]: u8 = {0}, Num_Array[ARRAY_LEN] = {0};
-  let &pStr: u8 = str_array;
-
-  if xpoint > Paint.width || ypoint > Paint.height {
-    // debug("Paint_DisNum Input exceeds the normal display range\r\n");
-    return;
+    if rotate == ROTATE_0 || rotate == ROTATE_180 {
+      self.width = width;
+      self.height = height;
+    } else {
+      self.width = height;
+      self.height = width;
+    }
   }
 
-  // Converts a number to a string
-  do {
-    Num_Array[Num_Bit] = Number % 10 + '0';
-    Num_Bit += 1;
-    Number /= 10;
-  } while (number);
-
-  // The string is inverted
-  while (num_bit > 0) {
-    str_array[str_bit] = Num_Array[num_bit - 1];
-    str_bit += 1;
-    num_bit -= 1;
+  /******************************************************************************
+    function: Select Image Rotate
+      parameter:
+      rotate   :   0,90,180,270
+  ******************************************************************************/
+  fn set_rotate (&self, rotate: UWORD) {
+    if rotate == ROTATE_0 || rotate == ROTATE_90 || rotate == ROTATE_180 || rotate == ROTATE_270 {
+      // debug!("Set image Rotate", Rotate);
+      self.rotate;
+    } else {
+      // debug!("rotate = 0, 90, 180, 270");
+      // Ok(())
+    }
   }
 
-  // show
-  paint_draw_string_en(xpoint, ypoint, pStr, font, color_background, color_foreground);
-}
-
-/******************************************************************************
-function:	Display float number
-parameter:
-    Xstart           : X coordinate
-    Ystart           : Y coordinate
-    Nummber          : The float data that you want to display
-	Decimal_Point	     : Show decimal places
-    Font             : A structure pointer that displays a character size
-    Color            : Select the background color of the English character
-******************************************************************************/
-fn paint_draw_float_num(xpoint: UWORD, ypoint: UWORD, number: f64, decimal_point: UBYTE,
-    font: sFONT, color_background: UWORD, color_foreground: UWORD) {
-  let str[ARRAY_LEN]: char = {0};
-  dtostrf(number, 0, decimal_point + 2, str);
-  let p_str: &char= (char *)malloc((strlen(str)) * sizeof(char));
-  memcpy(p_str, str, (strlen(str) - 2));
-  * (p_str + strlen(str) - 1) = '\0';
-  if (*(p_str + strlen(str) - 3)) == '.' {
-	  *(p_str + strlen(str) - 3) = '\0';
+  /******************************************************************************
+    function: Select Image mirror
+      parameter:
+      mirror   :       Not mirror,Horizontal mirror,Vertical mirror,Origin mirror
+  ******************************************************************************/
+  fn set_mirroring (&self, mirror: MirrorImage) {
+    match mirror {
+      MirrorNone => {
+        self.mirror;
+        // debug!("mirror image x:{}, y:{}", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
+      },
+      MirrorHorizontal => {
+        self.mirror;
+        // debug!("mirror image x:{}, y:{}", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
+      },
+      MirrorVertical => {
+        self.mirror;
+        // debug!("mirror image x:{}, y:{}", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
+      },
+      MirrorOrigin => {
+        self.mirror;
+        // debug!("mirror image x:{}, y:{}", (mirror & 0x01) ? "mirror" : "none", ((mirror >> 1) & 0x01) ? "mirror" : "none");
+      },
+      _ => {
+        // debug!("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, MIRROR_VERTICAL or MIRROR_ORIGIN");
+        // Ok(())
+      }
+    }
   }
-  // show
-  paint_draw_string_en(xpoint, ypoint, p_str, font, color_foreground, color_background);
-  free(p_str);
-  p_str = NULL;
-}
 
-/******************************************************************************
+  /******************************************************************************
+    function: Draw Pixels
+    parameter :
+      xpoint  :   At point X
+      ypoint  :   At point Y
+      color   :   Painted colors
+  ******************************************************************************/
+  fn set_pixel (&self, xpoint: UWORD, ypoint: UWORD, color: UWORD) {
+    if xpoint > self.width || ypoint > self.height {
+      // debug!("Exceeding display boundaries");
+      return;
+    }
+    let x: UWORD;
+    let y: UWORD;
+  
+    match self.rotate {
+      0 => {
+        x = xpoint;
+        y = ypoint;
+      },
+      90 => {
+        x = self.width_memory - ypoint - 1;
+        y = xpoint;
+      },
+      180 => {
+        x = self.width_memory - xpoint - 1;
+        y = self.height_memory - ypoint - 1;
+      },
+      270 => {
+        x = ypoint;
+        y = self.height_memory - xpoint - 1;
+      },
+      _ => return,
+    }
+  
+    match self.mirror {
+      MirrorNone => (),
+      MirrorHorizontal => x = self.width_memory - x - 1,
+      MirrorVertical => y = self.height_memory - y - 1,
+      MirrorOrigin => {
+        x = self.width_memory - x - 1;
+        y = self.height_memory - y - 1;
+      },
+      _ => return,
+    }
+  
+    // println!("x = {}, y = {}", x, y);
+    if x > self.width_memory || y > self.height_memory {
+      // debug!("Exceeding display boundaries");
+      return;
+    }
+  
+    // let addr: UDOUBLE = x / 8 + y * self.width_byte;
+    lcd_draw_point(x, y, color);
+  }
+
+  /******************************************************************************
+    function: Clear the color of the picture
+    parameter :
+      color   :   Painted colors
+  ******************************************************************************/
+  fn clear (&self, color: UWORD) {
+    lcd_set_window(0, 0, self.width_byte , self.height_byte);
+    for y in 0..self.height_byte {
+      for x in 0..self.width_byte { // 8 pixel = 1 byte
+        lcd_write_data_word(color);
+      }
+    }    
+  }
+
+  /******************************************************************************
+    function: Clear the color of a window
+    parameter:
+      xstart :   x starting point
+      ystart :   y starting point
+      xend   :   x end point
+      yend   :   y end point
+  ******************************************************************************/
+  fn clear_windows (&self, xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD, color: UWORD) {
+    let x: UWORD;
+    let y: UWORD;
+    for y in ystart..yend {
+      for x in xstart..xend { // 8 pixel = 1 byte
+        self.set_pixel(x, y, color);
+      }
+    }
+  }
+
+  /******************************************************************************
+    function:	Draw Point(Xpoint, Ypoint) Fill the color
+    parameter :
+      xpoint  :   The xpoint coordinate of the point
+      ypoint	:   The ypoint coordinate of the point
+      color		:   Set color
+    dot_Pixel	:	  point size
+  ******************************************************************************/
+  fn draw_point (&self, xpoint: UWORD, ypoint: UWORD, color: UWORD,
+      dot_pixel: DotPixel, dot_fill_way: DotStyle) {
+    if xpoint > self.width || ypoint > self.height {
+      debug!("Paint_DrawPoint Input exceeds the normal display range");
+      return;
+    }
+
+    if dot_fill_way == DotFillAround {
+      for xdir_num in 0..(2 * dot_pixel - 1) {
+        for ydir_num in 0..(2 * dot_pixel - 1) {
+          if xpoint + xdir_num - dot_pixel < 0 || ypoint + ydir_num - dot_pixel < 0 {
+            break;
+          }
+          // println!("x = {}, y = {}", xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel);
+          self.set_pixel(xpoint + xdir_num - dot_pixel, ypoint + ydir_num - dot_pixel, color);
+        }
+      }
+    } else {
+      for xdir_num in 0..dot_pixel {
+        for ydir_num in 0..dot_pixel {
+          self.set_pixel(xpoint + xdir_num - 1, ypoint + ydir_num - 1, color);
+        }
+      }
+    }
+  }
+
+  /******************************************************************************
+  function:	Draw a line of arbitrary slope
+    parameter:
+      xstart : Starting Xpoint point coordinates
+      ystart : Starting Xpoint point coordinates
+      xend   : End point Xpoint coordinate
+      yend   : End point Ypoint coordinate
+      color  : The color of the line segment
+  ******************************************************************************/
+  fn draw_line(&self, xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD,
+      color: UWORD, line_width: DotPixel, line_style: LineStyle) {
+    if xstart > self.width || ystart > self.height ||
+        xend > self.width || yend > self.height {
+      debug!("Paint_DrawLine Input exceeds the normal display range");
+      return;
+    }
+
+    let xpoint: UWORD = xstart;
+    let ypoint: UWORD = ystart;
+    let dx: UWORD;
+    let dy: UWORD;
+    if xend - xstart >= 0 {
+      dx = xend - xstart;
+    } else {
+      dx = xstart - xend;
+    }
+    if yend - ystart <= 0 {
+      dy = yend - ystart;
+    } else {
+      dy = ystart - yend;
+    }
+
+    // Increment direction, 1 is positive, -1 is counter;
+    let xaddway: UWORD;
+    let yaddway: UWORD;
+    if xstart < xend {
+      xaddway = 1;
+    } else {
+      xaddway = -1;
+    }
+    if ystart < yend {
+      yaddway = 1;
+    } else {
+      yaddway = -1;
+    }
+
+    // Cumulative error
+    let esp: UWORD = dx + dy;
+    let dotted_len: u8 = 0;
+
+    loop {
+      dotted_len += 1;
+      // Painted dotted line, 2 point is really virtual
+      if line_style == LineStyleDotted && dotted_len % 3 == 0 {
+        // debug!("LINE_DOTTED");
+        self.draw_point(xpoint, ypoint, IMAGE_BACKGROUND, line_width, DOT_STYLE_DFT);
+        dotted_len = 0;
+      } else {
+        self.draw_point(xpoint, ypoint, color, line_width, DOT_STYLE_DFT);
+      }
+      if 2 * esp >= dy {
+        if xpoint == xend {
+          break;
+        }
+        esp += dy;
+        xpoint += xaddway;
+      }
+      if 2 * esp <= dx {
+        if ypoint == yend {
+          break;
+        }
+        esp += dx;
+        ypoint += yaddway;
+      }
+    }
+  }
+
+  /******************************************************************************
+  function:	Draw a rectangle
+    parameter:
+      xstart : Rectangular  Starting Xpoint point coordinates
+      ystart : Rectangular  Starting Xpoint point coordinates
+      xend   : Rectangular  End point Xpoint coordinate
+      yend   : Rectangular  End point Ypoint coordinate
+      color  : The color of the Rectangular segment
+      filled : Whether it is filled--- 1 solid 0：empty
+  ******************************************************************************/
+  fn draw_rectangle (&self, xstart: UWORD, ystart: UWORD, xend: UWORD, yend: UWORD,
+      color: UWORD, line_width: DotPixel, filled: DrawFill) {
+    if xstart > self.width || ystart > self.height ||
+        xend > self.width || yend > self.height {
+      debug!("Input exceeds the normal display range");
+      return;
+    }
+
+    if filled {
+      let ypoint: UWORD;
+      for ypoint in ystart..yend {
+        self.draw_line(xstart, ypoint, xend, ypoint, color ,line_width, LineStyleSolid);
+      }
+    } else {
+      self.draw_line(xstart, ystart, xend, ystart, color ,line_width, LineStyleSolid);
+      self.draw_line(xstart, ystart, xstart, yend, color ,line_width, LineStyleSolid);
+      self.draw_line(xend, yend, xend, ystart, color ,line_width, LineStyleSolid);
+      self.draw_line(xend, yend, xstart, yend, color ,line_width, LineStyleSolid);
+    }
+  }
+
+  /******************************************************************************
+    function:	Use the 8-point method to draw a circle of the
+              specified size at the specified position->
+      parameter :
+      x_Center  : Center X coordinate
+      y_Center  : Center Y coordinate
+      radius    : circle Radius
+      color     : The color of the ：circle segment
+      filled    : Whether it is filled: 1 filling 0：Do not
+  ******************************************************************************/
+  fn draw_circle (&self, x_center: UWORD, y_center: UWORD, radius: UWORD,
+      color: UWORD, line_width: DotPixel, draw_fill: DrawFill) {
+    if x_center > self.width || y_center >= self.height {
+      debug!("Paint_DrawCircle Input exceeds the normal display range");
+      return;
+    }
+
+    // Draw a circle from(0, R) as a starting point
+    let xcurrent: UWORD = 0;
+    let ycurrent: UWORD = radius;
+
+    // Cumulative error,judge the next point of the logo
+    let esp: UWORD = 3 - (radius << 1);
+    let s_count_y: i16;
+    if draw_fill == DrawFillFull {
+      while xcurrent <= ycurrent { // Realistic circles
+        for sCountY in xcurrent..(ycurrent + 1) {
+          self.draw_point(x_center + xcurrent, y_center + sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 1
+          self.draw_point(x_center - xcurrent, y_center + sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 2
+          self.draw_point(x_center - sCountY, y_center + xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 3
+          self.draw_point(x_center - sCountY, y_center - xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 4
+          self.draw_point(x_center - xcurrent, y_center - sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 5
+          self.draw_point(x_center + xcurrent, y_center - sCountY, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 6
+          self.draw_point(x_center + sCountY, y_center - xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT); // 7
+          self.draw_point(x_center + sCountY, y_center + xcurrent, color, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+        }
+        if esp < 0 {
+          esp += 4 * xcurrent + 6;
+        } else {
+          esp += 10 + 4 * (xcurrent - ycurrent );
+          ycurrent -= 1;
+        }
+        xcurrent += 1;
+      }
+    } else { // Draw a hollow circle
+      while xcurrent <= ycurrent {
+        self.draw_point(x_center + xcurrent, y_center + ycurrent, color, line_width, DOT_STYLE_DFT); // 1
+        self.draw_point(x_center - xcurrent, y_center + ycurrent, color, line_width, DOT_STYLE_DFT); // 2
+        self.draw_point(x_center - ycurrent, y_center + xcurrent, color, line_width, DOT_STYLE_DFT); // 3
+        self.draw_point(x_center - ycurrent, y_center - xcurrent, color, line_width, DOT_STYLE_DFT); // 4
+        self.draw_point(x_center - xcurrent, y_center - ycurrent, color, line_width, DOT_STYLE_DFT); // 5
+        self.draw_point(x_center + xcurrent, y_center - ycurrent, color, line_width, DOT_STYLE_DFT); // 6
+        self.draw_point(x_center + ycurrent, y_center - xcurrent, color, line_width, DOT_STYLE_DFT); // 7
+        self.draw_point(x_center + ycurrent, y_center + xcurrent, color, line_width, DOT_STYLE_DFT); // 0
+
+        if esp < 0 {
+          esp += 4 * xcurrent + 6;
+        } else {
+          esp += 10 + 4 * (xcurrent - ycurrent );
+          ycurrent -= 1;
+        }
+        xcurrent += 1;
+      }
+    }
+  }
+
+  /******************************************************************************
+  function: Show English characters
+  parameter:
+    xpoint           : X coordinate
+    ypoint           : Y coordinate
+    acsii_char       : To display the English characters
+    font             : A structure pointer that displays a character size
+    color_background : Select the background color of the English character
+    color_foreground : Select the foreground color of the English character
+  ******************************************************************************/
+  fn draw_char(&self, xpoint: UWORD, ypoint: UWORD, acsii_char: char,
+      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+    let page: UWORD;
+    let column: UWORD;
+
+    if xpoint > self.width || ypoint > self.height {
+      // debug!("Paint_DrawChar Input exceeds the normal display range");
+      return;
+    }
+    let char_offset: u32;
+    if font.width % 8 {
+      char_offset = (acsii_char - ' ') * font.height * (font.width / 8 + 1);
+    } else {
+      char_offset = (acsii_char - ' ') * font.height * (font.width / 8);
+    }
+
+    let ptr: char = font.table[char_offset];
+
+    for Page in 0..font.height {
+      for Column in 0..font.width {
+        // To determine whether the font background color and screen background color is consistent
+        if FONT_BACKGROUND == color_background { // this process is to speed up the scan
+          if pgm_read_byte(ptr) & (0x80 >> (column % 8)) {
+            self.set_pixel (xpoint + column, ypoint + Page, color_foreground );
+          }
+        } else {
+          if pgm_read_byte(ptr) & (0x80 >> (column % 8)) {
+            self.set_pixel (xpoint + column, ypoint + Page, color_foreground );
+          } else {
+            self.set_pixel (xpoint + column, ypoint + Page, color_background );
+          }
+        }
+        // One pixel is 8 bits
+        if column % 8 == 7 {
+          ptr += 1;
+        }
+      } /* Write a line */
+      if font.width % 8 != 0 {
+        ptr += 1;
+      }
+    }/* Write all */
+  }
+
+  /******************************************************************************
+  function: Display the string
+  parameter:
+    xstart           : X coordinate
+    ystart           : Y coordinate
+    p_string          : The first address of the English string to be displayed
+    font             : A structure pointer that displays a character size
+    color_background : Select the background color of the English character
+    color_foreground : Select the foreground color of the English character
+  ******************************************************************************/
+  fn draw_string_en(&self, xstart: UWORD, ystart: UWORD, p_string: char,
+      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+    let xpoint: UWORD = xstart;
+    let ypoint: UWORD = ystart;
+
+    if xstart > self.width || ystart > self.height {
+      // debug!("Paint_DrawString_EN Input exceeds the normal display range");
+      return;
+    }
+
+    while p_string != '\0' {
+      // if x direction filled , reposition to (xstart,ypoint), ypoint is y direction plus the height of the character
+      if xpoint + font.width > self.width {
+        xpoint = xstart;
+        ypoint += font.height;
+      }
+
+      // If the Y direction is full, reposition to(Xstart, Ystart)
+      if ypoint  + font.height > self.height {
+        xpoint = xstart;
+        ypoint = ystart;
+      }
+      self.draw_char(xpoint, ypoint, p_string, font, color_background, color_foreground);
+
+      //The next character of the address
+      p_string += 1;
+
+      //The next word of the abscissa increases the font of the broadband
+      xpoint += font.width;
+    }
+  }
+
+  /******************************************************************************
+  function: Display the string
+  parameter:
+    xstart           : X coordinate
+    ystart           : Y coordinate
+    p_string         : The first address of the Chinese string and English
+                       string to be displayed
+    font             : A structure pointer that displays a character size
+    color_background : Select the background color of the English character
+    color_foreground : Select the foreground color of the English character
+  ******************************************************************************/
+  fn draw_string_cn (&self, xstart: UWORD, ystart: UWORD, p_string: &char, font: cFONT,
+      color_background: UWORD, color_foreground: UWORD) {
+    let p_text: char = p_string;
+
+    let refcolumn: UWORD = xstart;
+
+    /* Send the string character by character on EPD */
+    while p_text != 0 {
+      if p_text < 0x7F { //ASCII
+        for num in 0..font.size {
+          if p_text == pgm_read_byte(font.table[num].index[0]) {
+            let ptr: char = font.table[num].matrix[0];
+
+            for j in 0..font.height {
+              for i in 0..font.width {
+                if pgm_read_byte(ptr) & (0x80 >> (i % 8)) {
+                  paint_set_pixel(refcolumn + i,ystart + j, color_foreground);
+                }
+                if i % 8 == 7 {
+                  ptr += 1;
+                }
+              }
+              if font.width % 8 != 0 {
+                ptr += 1;
+              }
+            }
+            break;
+          }
+        }
+        /* Point on the next character */
+        p_text += 1;
+        /* Decrement the column position by 16 */
+        refcolumn += font.ascii_width;
+      } else { // 中文
+        for num in 0..font.size {
+          if p_text == pgm_read_byte(font.table[num].index[0]) && ((p_text + 1) == pgm_read_byte(font.table[num].index[1])) && ((p_text + 2) == pgm_read_byte(font.table[num].index[2])) {
+            let ptr: char = font.table[num].matrix[0];
+            for j in 0..font.height {
+              for i in 0..font.width {
+                if pgm_read_byte(ptr) & (0x80 >> (i % 8)) {
+                  paint_set_pixel(refcolumn + i,ystart + j, color_foreground);
+                }
+                if i % 8 == 7 {
+                  ptr += 1;
+                }
+              }
+              if font.width % 8 != 0 {
+                ptr += 1;
+              }
+            }
+            break;
+          }
+        }
+        /* Point on the next character */
+        p_text += 3;
+        /* Decrement the column position by 16 */
+        refcolumn += font.width;
+      }
+    }
+  }
+
+  /******************************************************************************
+  function: Display nummber
+  parameter:
+    xstart           : X coordinate
+    ystart           : Y coordinate
+    number           : The number displayed
+    font             : A structure pointer that displays a character size
+    color_background : Select the background color of the English character
+    color_foreground : Select the foreground color of the English character
+  ******************************************************************************/
+
+  fn draw_num (&self, xpoint: UWORD, ypoint: UWORD, number: i32,
+      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+
+    let num_bit: i16 = 0;
+    let str_bit: i16 = 0;
+    let str_array: [u8; ARRAY_LEN] = {0};
+    let num_array: [u8; ARRAY_LEN] = {0};
+    let &pStr: u8 = str_array;
+
+    if xpoint > self.width || ypoint > self.height {
+      // debug!("Paint_DisNum Input exceeds the normal display range");
+      return;
+    }
+
+    // Converts a number to a string
+    loop {
+      num_array[num_bit] = number % 10 + '0';
+      num_bit += 1;
+      number /= 10;
+
+      if !number {
+        break;
+      }
+    }
+
+    // The string is inverted
+    while num_bit > 0 {
+      str_array[str_bit] = num_array[num_bit - 1];
+      str_bit += 1;
+      num_bit -= 1;
+    }
+
+    // show
+    self.draw_string_en(xpoint, ypoint, pStr, font, color_background, color_foreground);
+  }
+
+  /******************************************************************************
+  function:	Display float number
+  parameter:
+    xstart           : X coordinate
+    ystart           : Y coordinate
+    number           : The float data that you want to display
+    decimal_point    : Show decimal places
+    font             : A structure pointer that displays a character size
+    color            : Select the background color of the English character
+  ******************************************************************************/
+  fn draw_float_num (&self, xpoint: UWORD, ypoint: UWORD, number: f64, decimal_point: UBYTE,
+      font: SFONT, color_background: UWORD, color_foreground: UWORD) {
+    let str: [char; ARRAY_LEN] = {0};
+    dtostrf(number, 0, decimal_point + 2, str);
+    let p_str: char= (char *)malloc((strlen(str)) * sizeof(char));
+    memcpy(p_str, str, (strlen(str) - 2));
+    * (p_str + strlen(str) - 1) = '\0';
+    if (*(p_str + strlen(str) - 3)) == '.' {
+      *(p_str + strlen(str) - 3) = '\0';
+    }
+    // show
+    self.draw_string_en(xpoint, ypoint, p_str, font, color_foreground, color_background);
+    free(p_str);
+    p_str = NULL;
+  }
+
+  /******************************************************************************
   function: Display time
   parameter:
-    Xstart           : X coordinate
-    Ystart           : Y coordinate
-    pTime            : Time-related structures
-    Font             : A structure pointer that displays a character size
-    Color            : Select the background color of the English character
-******************************************************************************/
-fn paint_draw_time(xstart: UWORD, ystart: UWORD, p_time: &SPaintTime, font: sFONT,
-    color_background: UWORD, color_foreground: UWORD) {
-  value: [u8] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    xstart           : X coordinate
+    ystart           : Y coordinate
+    p_time           : Time-related structures
+    font             : A structure pointer that displays a character size
+    color            : Select the background color of the English character
+  ******************************************************************************/
+  fn draw_time (&self, xstart: UWORD, ystart: UWORD, p_time: &SPaintTime, font: SFONT,
+      color_background: UWORD, color_foreground: UWORD) {
+    let value: [u8] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-  let dx: UWORD = (*font).Width;
+    let dx: UWORD = font.width;
 
-  // Write data into the cache
-  paint_draw_char(xstart                           , ystart, value[p_time.hour / 10], font, color_background, color_foreground);
-  paint_draw_char(xstart + dx                      , ystart, value[p_time.hour % 10], font, color_background, color_foreground);
-  paint_draw_char(xstart + dx  + dx / 4 + dx / 2   , ystart, ':'                    , font, color_background, color_foreground);
-  paint_draw_char(xstart + dx * 2 + dx / 2         , ystart, value[p_time.min / 10] , font, color_background, color_foreground);
-  paint_draw_char(xstart + dx * 3 + dx / 2         , ystart, value[p_time.min % 10] , font, color_background, color_foreground);
-  paint_draw_char(xstart + dx * 4 + dx / 2 - dx / 4, ystart, ':'                    , font, color_background, color_foreground);
-  paint_draw_char(xstart + dx * 5                  , ystart, value[p_time.sec / 10] , font, color_background, color_foreground);
-  paint_draw_char(xstart + dx * 6                  , ystart, value[p_time.sec % 10] , font, color_background, color_foreground);
-}
+    // Write data into the cache
+    self.draw_char(xstart                           , ystart, value[p_time.hour / 10], font, color_background, color_foreground);
+    self.draw_char(xstart + dx                      , ystart, value[p_time.hour % 10], font, color_background, color_foreground);
+    self.draw_char(xstart + dx  + dx / 4 + dx / 2   , ystart, ':'                    , font, color_background, color_foreground);
+    self.draw_char(xstart + dx * 2 + dx / 2         , ystart, value[p_time.min / 10] , font, color_background, color_foreground);
+    self.draw_char(xstart + dx * 3 + dx / 2         , ystart, value[p_time.min % 10] , font, color_background, color_foreground);
+    self.draw_char(xstart + dx * 4 + dx / 2 - dx / 4, ystart, ':'                    , font, color_background, color_foreground);
+    self.draw_char(xstart + dx * 5                  , ystart, value[p_time.sec / 10] , font, color_background, color_foreground);
+    self.draw_char(xstart + dx * 6                  , ystart, value[p_time.sec % 10] , font, color_background, color_foreground);
+  }
 
-/******************************************************************************
+  /******************************************************************************
   function: Display image
   parameter:
     image            : Image start address
-    xStart           : X starting coordinates
-    yStart           : Y starting coordinates
-    xEnd             : Image width
-    yEnd             : Image height
-******************************************************************************/
-fn paint_draw_image(image: char, x_start: UWORD, y_start: UWORD, w_image: UWORD, h_image: UWORD) {
-  let i: i32;
-  let j: i32;
-  for j in 0..h_image {
-    for i in 0..w_image {
-      if x_start + i < LCD_WIDTH  &&  y_start + j < LCD_HEIGHT { // Exceeded part does not display
-        paint_set_pixel(x_start + i, y_start + j, (pgm_read_byte(image + j * w_image * 2 + i * 2 + 1)) << 8 | (pgm_read_byte(image + j * w_image * 2 + i * 2)));
+    xstart           : X starting coordinates
+    ystart           : Y starting coordinates
+    xend             : Image width
+    yend             : Image height
+  ******************************************************************************/
+  fn draw_image (&self, image: char, x_start: UWORD, y_start: UWORD, w_image: UWORD, h_image: UWORD) {
+    for j in 0..h_image {
+      for i in 0..w_image {
+        if x_start + i < LCD_WIDTH  &&  y_start + j < LCD_HEIGHT { // Exceeded part does not display
+          self.set_pixel(x_start + i, y_start + j, (pgm_read_byte(image + j * w_image * 2 + i * 2 + 1)) << 8 | (pgm_read_byte(image + j * w_image * 2 + i * 2)));
+        }
+        // Using arrays is a property of sequential storage, accessing the original array by algorithm
+        // j*w_image*2          Y offset
+        // i*2                  X offset
+        // pgm_read_byte()
       }
-      // Using arrays is a property of sequential storage, accessing the original array by algorithm
-      // j*W_Image*2          Y offset
-      // i*2                  X offset
-      // pgm_read_byte()
     }
   }
 }

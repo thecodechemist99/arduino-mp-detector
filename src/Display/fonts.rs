@@ -42,16 +42,16 @@ const OFFSET_BITMAP: u8;
 
 //ASCII
 pub struct  SFont {
-  table: &u8,
+  table: u8,
   width: u16,
   height: u16,
 }
 
 
 // GB2312
-struct ChCn {                                       // 汉字字模数据结构
-  index[3]: [char],                                  // 汉字内码索引
-  matrix[MAX_HEIGHT_FONT * MAX_WIDTH_FONT / 8]: 8;   // 点阵码数据
+struct ChCn {                                         // 汉字字模数据结构
+  index: [char; 3],                                   // 汉字内码索引
+  matrix: [char; MAX_HEIGHT_FONT * MAX_WIDTH_FONT / 8],    // 点阵码数据
 }
 
 
@@ -71,7 +71,7 @@ pub const FONT8: SFont;
 
 pub const FONT12_CN: CFont;
 pub const FONT24_CN: CFont;
-pub const Font16_Table[]: [uchar];
+pub const Font16_Table: [char];
  
 
 /************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/
