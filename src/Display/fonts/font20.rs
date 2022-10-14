@@ -1,14 +1,14 @@
 /**
   ******************************************************************************
-  * @file    font20.c
-  * @author  MCD Application Team
+  * @file    font20.rs
+  * @author  Florian Beck, MCD Application Team
   * @version V1.0.0
-  * @date    18-February-2014
+  * @date    07-October-2022
   * @brief   This file provides text font20 for STM32xx-EVAL's LCD driver. 
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2014 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2022 Florian Beck, STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -35,12 +35,12 @@
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
-#include "fonts.h"
+#[path = "../fonts.rs"]
+mod fonts;
+use fonts::*;
 
 // Character bitmaps for Courier New 15pt
-const uint8_t Font20_Table[] PROGMEM = 
-{
+const Font20_Table[]: u8[] = {
   // @0 ' ' (14 pixels wide)
   0x00, 0x00, //               
   0x00, 0x00, //               
@@ -2133,10 +2133,10 @@ const uint8_t Font20_Table[] PROGMEM =
 };
 
 
-sFONT Font20 = {
+Font20: sFONT = {
   Font20_Table,
   14, /* Width */
   20, /* Height */
 };
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file    Font8.c
-  * @author  MCD Application Team
+  * @file    Font8.rs
+  * @author  Florian Beck, MCD Application Team
   * @version V1.0.0
-  * @date    18-February-2014
+  * @date    07-October-2022
   * @brief   This file provides text Font8 for STM32xx-EVAL's LCD driver. 
   ******************************************************************************
   * @attention
@@ -35,15 +35,15 @@
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
-#include "fonts.h"
+#[path = "../fonts.rs"]
+mod fonts;
+use fonts::*;
 
 // 
 //  Font data for Courier New 12pt
 // 
 
-const uint8_t Font8_Table[] PROGMEM = 
-{
+const Font8_Table[]: u8[] = {
   // @0 ' ' (5 pixels wide)
   0x00, //      
   0x00, //      
@@ -995,10 +995,10 @@ const uint8_t Font8_Table[] PROGMEM =
   0x00, //      
 };
 
-sFONT Font8 = {
+pub const Font8: sFONT = {
   Font8_Table,
   5, /* Width */
   8, /* Height */
 };
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

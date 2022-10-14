@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file    Font12.c
-  * @author  MCD Application Team
+  * @file    Font12.rs
+  * @author  Florian Beck, MCD Application Team
   * @version V1.0.0
-  * @date    18-February-2014
+  * @date    07-October-2022
   * @brief   This file provides text Font12 for STM32xx-EVAL's LCD driver. 
   ******************************************************************************
   * @attention
@@ -36,15 +36,14 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "fonts.h"
-
+mod fonts;
+use fonts::*;
 
 // 
 //  Font data for Courier New 12pt
 // 
 
-const CH_CN Font12CN_Table[] = 
-{
+const Font12CN_Table[]: ChCn = {
 /*--  文字:  你  --*/
 /*--  微软雅黑12;  此字体下对应的点阵为：宽x高=16x21   --*/
 {"你",
@@ -109,12 +108,12 @@ const CH_CN Font12CN_Table[] =
 0xE0,0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
 };
 
-cFONT Font12CN = {
+Font12CN: cFONT = {
   Font12CN_Table,
-  sizeof(Font12CN_Table)/sizeof(CH_CN),  /*size of table*/
+  sizeof(Font12CN_Table)/sizeof(CH_CN),  /* size of table */
   11, /* ASCII Width */
   16, /* Width */
   21, /* Height */
 };
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

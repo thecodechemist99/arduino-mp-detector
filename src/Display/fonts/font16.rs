@@ -1,14 +1,14 @@
 /**
   ******************************************************************************
-  * @file    font16.c
-  * @author  MCD Application Team
+  * @file    font16.rs
+  * @author  Florian Beck, MCD Application Team
   * @version V1.0.0
-  * @date    18-February-2014
+  * @date    07-October-2022
   * @brief   This file provides text font16 for STM32xx-EVAL's LCD driver. 
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2014 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2022 Florian Beck, STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -35,13 +35,15 @@
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
-#include "fonts.h"
+#[path = "../fonts.rs"]
+mod fonts;
+use fonts::*;
+
 // 
 //  Font data for Courier New 12pt
 // 
 
-const unsigned char Font16_Table[] PROGMEM = 
+const Font16_Table[]: char[] = 
 {
   // @0 ' ' (11 pixels wide)
   0x00, 0x00, //            
@@ -1754,10 +1756,10 @@ const unsigned char Font16_Table[] PROGMEM =
   0x00, 0x00, //            
 };
 
-sFONT Font16 = {
+Font16: sFONT = {
   Font16_Table,
   11, /* Width */
   16, /* Height */
 };
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/
