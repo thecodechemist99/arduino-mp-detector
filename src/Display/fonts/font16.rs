@@ -43,8 +43,7 @@ use fonts::*;
 //  Font data for Courier New 12pt
 // 
 
-const Font16_Table[]: char[] = 
-{
+const Font16_Table: [char] = [
   // @0 ' ' (11 pixels wide)
   0x00, 0x00, //            
   0x00, 0x00, //            
@@ -1754,12 +1753,12 @@ const Font16_Table[]: char[] =
   0x00, 0x00, //            
   0x00, 0x00, //            
   0x00, 0x00, //            
-};
+];
 
-Font16: sFONT = {
-  Font16_Table,
-  11, /* Width */
-  16, /* Height */
+pub const Font16: SFont = {
+  Font16_Table;
+  11; /* Width */
+  16; /* Height */
 };
 
 /************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

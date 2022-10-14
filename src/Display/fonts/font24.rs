@@ -39,7 +39,7 @@
 mod fonts;
 use fonts::*;
 
-const Font24_Table: [u8; ] = [
+const Font24_Table: [u8] = [
   // @0 ' ' (17 pixels wide)
   0x00, 0x00, 0x00, //                  
   0x00, 0x00, 0x00, //                  
@@ -2511,10 +2511,10 @@ const Font24_Table: [u8; ] = [
   0x00, 0x00, 0x00, //                  
 ];
 
-const Font24: sFONT = {
-  Font24_Table,
-  17, /* Width */
-  24, /* Height */
+const Font24: SFont = {
+  Font24_Table;
+  17; /* Width */
+  24; /* Height */
 };
 
 /************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

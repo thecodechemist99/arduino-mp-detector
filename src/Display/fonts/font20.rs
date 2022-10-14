@@ -40,7 +40,7 @@ mod fonts;
 use fonts::*;
 
 // Character bitmaps for Courier New 15pt
-const Font20_Table[]: u8[] = {
+const Font20_Table: [u8] = [
   // @0 ' ' (14 pixels wide)
   0x00, 0x00, //               
   0x00, 0x00, //               
@@ -2130,13 +2130,13 @@ const Font20_Table[]: u8[] = {
   0x00, 0x00, //               
   0x00, 0x00, //               
   0x00, 0x00, //               
-};
+];
 
 
-Font20: sFONT = {
-  Font20_Table,
-  14, /* Width */
-  20, /* Height */
+pub const Font20: SFont = {
+  Font20_Table;
+  14; /* Width */
+  20; /* Height */
 };
 
 /************************ (C) COPYRIGHT Florian Beck, STMicroelectronics *****END OF FILE****/

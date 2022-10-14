@@ -31,7 +31,7 @@
 ******************************************************************************/
 
 use arduino_hal::spi;
-use embedded_hal::spi::FullDuplex;
+// use embedded_hal::spi::FullDuplex;
 
 mod Debug;
 
@@ -50,14 +50,14 @@ pub const DEV_BL_PIN: i32 = 9;
 /**
  * GPIO read and write
 **/
-pub fn dev_digital_write (_pin, _value) -> () {
+pub fn dev_digital_write (_pin: Pin<Input<Floating>>, _value: u8) -> () {
   if _value == 0 {
     _pin.set_low();
   } else {
     _pin.set_high();
   }
 } 
-pub fn dev_digital_read (_pin) -> u8 {
+pub fn dev_digital_read (_pin: Pin<Input<Floating>>) -> u8 {
   if _pin.is_low() {
     return 0;
   } else {
@@ -68,25 +68,25 @@ pub fn dev_digital_read (_pin) -> u8 {
 /**
  * SPI
 **/
-fn dev_spi_write (_dat) -> () {
+pub fn dev_spi_write (_dat: u8) {
   SPI.transfer(_dat); // what's the correct function?
 }
 
 /**
  * delay x ms
 **/
-fn dev_delay_ms (__xms: u16) -> () {
+pub fn dev_delay_ms (__xms: u16) {
   arduino_hal::delay_ms(__xms);
 }
 
 /**
  * PWM_BL
 **/
-fn dev_set_pwm (_value) -> () {
+fn dev_set_pwm (_value: u8) {
   pins[DEV_BL_PIN].analogWrite(_value);// what's the correct function?
 }
 
-fn gpio_init () -> () {
+fn gpio_init () {
   pins[DEV_CS_PIN].into_output();
   pins[DEV_RST_PIN].into_output();
   pins[DEV_DC_PIN].into_output();
@@ -94,7 +94,7 @@ fn gpio_init () -> () {
   pins[DEV_BL_PIN].analogWrite(140); // what's the right method?
 }
 
-pub fn config_init () -> () {
+pub fn config_init () {
   gpio_init();
   
   // serial
